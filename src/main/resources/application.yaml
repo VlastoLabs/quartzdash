@@ -1,0 +1,36 @@
+server:
+  port: 8080
+quartzdash:
+  connection:
+    mode: jdbc
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/quarkus_test
+      username: quarkus_test
+      password: quarkus_test
+      table-prefix: QRTZ_
+      driver-delegate-class: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+  security:
+    username: admin
+    password: ${QUARTZDASH_SECURITY_PASSWORD:admin}
+spring:
+  threads:
+    virtual:
+      enabled: true
+logging:
+  level:
+    root: INFO
+    com.quartzdash: DEBUG
+    org.quartz: WARN
+    org.springframework.jdbc: TRACE
+jackson:
+ serialization:
+   write-dates-as-timestamps: false
+   write-durations-as-timestamps: false
+ deserialization:
+   fail-on-unknown-properties: false
+   default-property-inclusion: non_null
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

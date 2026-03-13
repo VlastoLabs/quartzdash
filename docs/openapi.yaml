@@ -1,0 +1,516 @@
+openapi: 3.0.3
+info:
+  title: QuartzDash API
+  description: |
+    Quartz Scheduler Monitoring and Management Backend - Community Edition
+
+  version: 1.0.0-SNAPSHOT
+  contact:
+    name: QuartzDash Team
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Scheduler
+    description: Scheduler status and cluster management
+  - name: Jobs
+    description: Job management and execution
+  - name: Triggers
+    description: Trigger management operations
+
+paths:
+  /api/v1/scheduler/status:
+    get:
+      tags:
+        - Scheduler
+      summary: Get scheduler status
+      description: Gets the overall scheduler status from Quartz tables
+      operationId: getSchedulerStatus
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSchedulerStatus'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/scheduler/nodes:
+    get:
+      tags:
+        - Scheduler
+      summary: Get cluster nodes
+      description: Gets all cluster nodes from QRTZ_SCHEDULER_STATE
+      operationId: getClusterNodes
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseClusterNodes'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/jobs:
+    get:
+      tags:
+        - Jobs
+      summary: Get all jobs
+      description: Gets all jobs from QRTZ_JOB_DETAILS with optional group filter
+      operationId: getJobs
+      parameters:
+        - name: group
+          in: query
+          description: Filter by job group
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          description: Sort field(s)
+          required: false
+          schema:
+            type: string
+            default: key.name
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseJobPage'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/jobs/{group}/{name}:
+    get:
+      tags:
+        - Jobs
+      summary: Get job by key
+      description: Gets a specific job from QRTZ_JOB_DETAILS
+      operationId: getJob
+      parameters:
+        - name: group
+          in: path
+          required: true
+          description: Job group
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          description: Job name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseJob'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/triggers:
+    get:
+      tags:
+        - Triggers
+      summary: Get all triggers
+      description: Gets all triggers from QRTZ_TRIGGERS with optional filters
+      operationId: getTriggers
+      parameters:
+        - name: group
+          in: query
+          description: Filter by trigger group
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: Filter by trigger state
+          required: false
+          schema:
+            type: string
+            enum: [NONE, NORMAL, PAUSED, COMPLETE, BLOCKED, ERROR, WAITING]
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseTriggerPage'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/triggers/{group}/{name}:
+    get:
+      tags:
+        - Triggers
+      summary: Get trigger by key
+      description: Gets a specific trigger from QRTZ_TRIGGERS
+      operationId: getTrigger
+      parameters:
+        - name: group
+          in: path
+          required: true
+          description: Trigger group
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          description: Trigger name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseTrigger'
+        '404':
+          description: Trigger not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+components:
+  schemas:
+    ApiResponseJob:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/JobSummary'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+
+    ApiResponseJobPage:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PageJobSummary'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+
+    ApiResponseTrigger:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TriggerSummary'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+
+    ApiResponseTriggerPage:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PageTriggerSummary'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+
+    ApiResponseSchedulerStatus:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SchedulerStatus'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+
+    ApiResponseClusterNodes:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClusterNode'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+
+    ApiResponseError:
+      type: object
+      properties:
+        data:
+          type: object
+          nullable: true
+          description: Response data (null for errors)
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was generated
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+        error:
+          type: string
+          description: Error message
+
+    JobSummary:
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/JobKey'
+        description:
+          type: string
+        jobClassName:
+          type: string
+        durable:
+          type: boolean
+        requestsRecovery:
+          type: boolean
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerSummary'
+
+    JobKey:
+      type: object
+      properties:
+        group:
+          type: string
+        name:
+          type: string
+
+    TriggerSummary:
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/TriggerKey'
+        state:
+          type: string
+          enum: [NONE, NORMAL, PAUSED, COMPLETE, BLOCKED, ERROR, WAITING]
+        type:
+          type: string
+          enum: [SIMPLE, CRON, DAILY_INTERVAL, CALENDAR_INTERVAL, CUSTOM]
+        cronExpression:
+          type: string
+          nullable: true
+        nextFireTime:
+          type: string
+          format: date-time
+          nullable: true
+        prevFireTime:
+          type: string
+          format: date-time
+          nullable: true
+        misfireInstruction:
+          type: integer
+
+    TriggerKey:
+      type: object
+      properties:
+        group:
+          type: string
+        name:
+          type: string
+
+    SchedulerStatus:
+      type: object
+      properties:
+        instanceId:
+          type: string
+        instanceName:
+          type: string
+        state:
+          type: string
+          enum: [STARTED, SHUTDOWN, STANDBY]
+        totalJobs:
+          type: integer
+        totalTriggers:
+          type: integer
+        runningJobs:
+          type: integer
+        clusterNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClusterNode'
+        timestamp:
+          type: string
+          format: date-time
+
+    ClusterNode:
+      type: object
+      properties:
+        instanceId:
+          type: string
+        instanceName:
+          type: string
+        lastCheckin:
+          type: string
+          format: date-time
+        checkinInterval:
+          type: integer
+          format: int64
+        alive:
+          type: boolean
+
+    PageJobSummary:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobSummary'
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+
+    PageTriggerSummary:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerSummary'
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+
+    Pageable:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+        pageSize:
+          type: integer
+        offset:
+          type: integer
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+
+    Sort:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
