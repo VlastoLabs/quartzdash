@@ -1,6 +1,6 @@
 # QuartzDash
 
-[![Java](https://img.shields.io/badge/Java-21-blue.svg)](https://openjdk.org/)
+[![Java](https://img.shields.io/badge/Java-25-blue.svg)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.X-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![CI](https://github.com/VlastoLabs/quartzdash/actions/workflows/ci.yml/badge.svg)
